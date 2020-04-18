@@ -1,0 +1,24 @@
+node{
+    stage('SCM Checkout'){
+	   git credentialsId: 'git-credit', url: 'https://github.com/snganimesh/Spring-Demo.git'
+	}
+	stage ('Mvn package'){
+	     def  mvnHome = tool name: 'Maven-3', type: 'maven'
+		 def  mvnCmd  ="${mvnHome}/bin/mvn"
+		 sh label: '', script: "${mvnCmd} clean package"
+	}
+	stage ('Build docker Image'){
+	       sh label: '',script: " docker build -t snganimesh/spring-demo:1.0.0 ."
+  	  }
+  	  stage ('Push docker Image'){
+	      sh label: '',script: 'docker login -u snganimesh -p Docker@0208'
+	      sh label: '',script: 'docker push snganimesh/spring-demo:1.0.0'
+  	  }  
+  	 stage('Run docker Container'){
+	     def dockerRun = 'docker run -p 8086:8086 -d snganimesh/spring-demo:1.0.0'
+	     sshagent(['dev-server']) {
+		     sh label: '',script: "ssh -o StrictHostKeyChecking=no animesh_sng@34.71.183.30 ${dockerRun}"
+			
+		}
+  	 } 
+}
